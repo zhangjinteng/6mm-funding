@@ -1,0 +1,43 @@
+{
+    "name": "zhangjinteng/6mm-funding",
+    "description": "PHP gRPC SDK for the 6MM Funding AssetService.",
+    "type": "library",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.1",
+        "ext-grpc": "*",
+        "google/protobuf": "^4.33.6",
+        "grpc/grpc": "^1.57"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.6 || ^10.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "SixMm\\Funding\\": "src/",
+            "Asset_service\\": "src/Asset_service/",
+            "GPBMetadata\\": "src/GPBMetadata/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SixMm\\Funding\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.1.x-dev"
+        }
+    },
+    "scripts": {
+        "generate": "bash scripts/generate.sh",
+        "test": "phpunit",
+        "check": [
+            "@composer validate --strict",
+            "@test"
+        ]
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

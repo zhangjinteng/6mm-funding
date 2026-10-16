@@ -1,0 +1,879 @@
+syntax = "proto3";
+
+package asset_service;
+option go_package = "./pb";
+
+// AssetKind 表示 Funding 资产类型。
+enum AssetKind {
+  ASSET_KIND_UNSPECIFIED = 0;
+  ASSET_KIND_CRYPTO = 1;
+  ASSET_KIND_FIAT = 2;
+}
+
+// AssetStatus 表示 Funding 资产是否允许进入新资金业务。
+enum AssetStatus {
+  ASSET_STATUS_UNSPECIFIED = 0;
+  ASSET_STATUS_ENABLED = 1;
+  ASSET_STATUS_DISABLED = 2;
+}
+
+// CommandResultStatus 表示资金命令的持久处理状态。
+enum CommandResultStatus {
+  COMMAND_RESULT_STATUS_UNSPECIFIED = 0;
+  COMMAND_RESULT_STATUS_SUCCEEDED = 1;
+  COMMAND_RESULT_STATUS_REJECTED = 2;
+  COMMAND_RESULT_STATUS_ACCEPTED = 3;
+}
+
+// FundingHoldStatus 表示 Funding Hold 当前状态。
+enum FundingHoldStatus {
+  FUNDING_HOLD_STATUS_UNSPECIFIED = 0;
+  FUNDING_HOLD_STATUS_OPEN = 1;
+  FUNDING_HOLD_STATUS_CONSUMED = 2;
+  FUNDING_HOLD_STATUS_RELEASED = 3;
+}
+
+// FundingHoldCloseReason 表示 Funding Hold 的确定关闭原因。
+enum FundingHoldCloseReason {
+  FUNDING_HOLD_CLOSE_REASON_UNSPECIFIED = 0;
+  FUNDING_HOLD_CLOSE_REASON_SUCCESS = 1;
+  FUNDING_HOLD_CLOSE_REASON_USER_CANCELLED = 2;
+  FUNDING_HOLD_CLOSE_REASON_WALLET_REJECTED = 3;
+  FUNDING_HOLD_CLOSE_REASON_TRANSFER_FAILED = 4;
+  FUNDING_HOLD_CLOSE_REASON_BUSINESS_CANCELLED = 5;
+  FUNDING_HOLD_CLOSE_REASON_BUSINESS_REJECTED = 6;
+  FUNDING_HOLD_CLOSE_REASON_EXPIRED = 7;
+}
+
+// FundingBusinessMutationDirection 表示通用 Funding 可用余额的变动方向。
+enum FundingBusinessMutationDirection {
+  FUNDING_BUSINESS_MUTATION_DIRECTION_UNSPECIFIED = 0;
+  FUNDING_BUSINESS_MUTATION_DIRECTION_CREDIT_AVAILABLE = 1;
+  FUNDING_BUSINESS_MUTATION_DIRECTION_DEBIT_AVAILABLE = 2;
+}
+
+// FundingAdjustmentDirection 表示人工资金调整方向。
+enum FundingAdjustmentDirection {
+  FUNDING_ADJUSTMENT_DIRECTION_UNSPECIFIED = 0;
+  FUNDING_ADJUSTMENT_DIRECTION_CREDIT = 1;
+  FUNDING_ADJUSTMENT_DIRECTION_DEBIT = 2;
+}
+
+// FundingAdjustmentApprovalMode 表示调整单实际采用的审批方式。
+enum FundingAdjustmentApprovalMode {
+  FUNDING_ADJUSTMENT_APPROVAL_MODE_UNSPECIFIED = 0;
+  FUNDING_ADJUSTMENT_APPROVAL_MODE_AUTO = 1;
+  FUNDING_ADJUSTMENT_APPROVAL_MODE_MANUAL = 2;
+}
+
+// FundingAdjustmentStatus 表示调整单当前状态。
+enum FundingAdjustmentStatus {
+  FUNDING_ADJUSTMENT_STATUS_UNSPECIFIED = 0;
+  FUNDING_ADJUSTMENT_STATUS_PENDING_REVIEW = 1;
+  FUNDING_ADJUSTMENT_STATUS_REJECTED = 2;
+  FUNDING_ADJUSTMENT_STATUS_EXECUTED = 3;
+  FUNDING_ADJUSTMENT_STATUS_EXECUTION_REJECTED = 4;
+}
+
+// FundingAdjustmentReviewDecision 表示人工审批决定。
+enum FundingAdjustmentReviewDecision {
+  FUNDING_ADJUSTMENT_REVIEW_DECISION_UNSPECIFIED = 0;
+  FUNDING_ADJUSTMENT_REVIEW_DECISION_APPROVE = 1;
+  FUNDING_ADJUSTMENT_REVIEW_DECISION_REJECT = 2;
+}
+
+// FundingTransferCounterpartyType 表示 Funding 划转的交易账户对端。
+enum FundingTransferCounterpartyType {
+  FUNDING_TRANSFER_COUNTERPARTY_TYPE_UNSPECIFIED = 0;
+  FUNDING_TRANSFER_COUNTERPARTY_TYPE_CONTRACT = 1;
+  FUNDING_TRANSFER_COUNTERPARTY_TYPE_SPOT = 2;
+}
+
+// FundingTransferDirection 表示相对于 Funding 账户的划转方向。
+enum FundingTransferDirection {
+  FUNDING_TRANSFER_DIRECTION_UNSPECIFIED = 0;
+  FUNDING_TRANSFER_DIRECTION_FUNDING_OUT = 1;
+  FUNDING_TRANSFER_DIRECTION_FUNDING_IN = 2;
+}
+
+// FundingTransferStatus 表示账户划转的稳定业务状态。
+enum FundingTransferStatus {
+  FUNDING_TRANSFER_STATUS_UNSPECIFIED = 0;
+  FUNDING_TRANSFER_STATUS_PENDING = 1;
+  FUNDING_TRANSFER_STATUS_CONFIRMING = 2;
+  FUNDING_TRANSFER_STATUS_SUCCEEDED = 3;
+  FUNDING_TRANSFER_STATUS_REJECTED = 4;
+}
+
+// FundingTransferDownstreamStatus 表示交易账户对端的持久处理结果。
+enum FundingTransferDownstreamStatus {
+  FUNDING_TRANSFER_DOWNSTREAM_STATUS_UNSPECIFIED = 0;
+  FUNDING_TRANSFER_DOWNSTREAM_STATUS_PENDING = 1;
+  FUNDING_TRANSFER_DOWNSTREAM_STATUS_UNKNOWN = 2;
+  FUNDING_TRANSFER_DOWNSTREAM_STATUS_SUCCEEDED = 3;
+  FUNDING_TRANSFER_DOWNSTREAM_STATUS_REJECTED = 4;
+}
+
+// FundingAsset 表示平台级 Funding 资产目录记录。
+message FundingAsset {
+  int64 asset_id = 1;
+  string asset_code = 2;
+  string asset_name = 3;
+  AssetKind asset_kind = 4;
+  int32 internal_scale = 5;
+  AssetStatus status = 6;
+  int64 version = 7;
+  int64 created_at_ms = 8;
+  int64 updated_at_ms = 9;
+}
+
+message PingRequest {
+  string ping = 1;
+}
+
+message PingResponse {
+  string pong = 1;
+}
+
+message CreateFundingAssetRequest {
+  int64 command_id = 1;
+  string asset_code = 2;
+  string asset_name = 3;
+  AssetKind asset_kind = 4;
+}
+
+message CreateFundingAssetResponse {
+  int64 command_id = 1;
+  CommandResultStatus result_status = 2;
+  string result_code = 3;
+  string message = 4;
+  FundingAsset asset = 5;
+}
+
+message ChangeFundingAssetStatusRequest {
+  int64 command_id = 1;
+  string asset_code = 2;
+  AssetStatus target_status = 3;
+  int64 expected_version = 4;
+}
+
+message ChangeFundingAssetStatusResponse {
+  int64 command_id = 1;
+  CommandResultStatus result_status = 2;
+  string result_code = 3;
+  string message = 4;
+  FundingAsset asset = 5;
+}
+
+message GetFundingAssetRequest {
+  string asset_code = 1;
+}
+
+message GetFundingAssetResponse {
+  FundingAsset asset = 1;
+}
+
+message ListFundingAssetsRequest {
+  // api 只能省略或指定 ENABLED；admin 省略时查询全部。
+  AssetStatus status = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListFundingAssetsResponse {
+  repeated FundingAsset assets = 1;
+  string next_page_token = 2;
+}
+
+// FundingAccount 表示用户的 Funding 账户头或尚未落库的逻辑账户视图。
+message FundingAccount {
+  int64 account_id = 1;
+  string home_site_id = 2;
+  int64 user_id = 3;
+  string status = 6;
+  int64 version = 7;
+  int64 created_at_ms = 8;
+  int64 updated_at_ms = 9;
+  bool eligible = 10;
+  bool materialized = 11;
+  int64 agent_id = 12; // 上游权威代理归属，0 表示确定无代理
+}
+
+// FundingBalance 表示用户在单个 Funding 资产下的余额视图。
+message FundingBalance {
+  int64 account_id = 1;
+  int64 asset_id = 2;
+  string asset_code = 3;
+  string asset_name = 4;
+  AssetStatus asset_status = 5;
+  string available_amount = 6;
+  string held_amount = 7;
+  string total_amount = 8;
+  int64 version = 9;
+  int64 created_at_ms = 10;
+  int64 updated_at_ms = 11;
+  bool materialized = 12;
+  int64 balance_id = 13;
+}
+
+message GetFundingAccountRequest {
+  string home_site_id = 1;
+  int64 user_id = 2;
+}
+
+message GetFundingAccountResponse {
+  FundingAccount account = 1;
+}
+
+message GetFundingBalanceRequest {
+  string home_site_id = 1;
+  int64 user_id = 2;
+  string asset_code = 4;
+}
+
+message GetFundingBalanceResponse {
+  FundingBalance balance = 1;
+}
+
+message ListFundingBalancesRequest {
+  string home_site_id = 1;
+  int64 user_id = 2;
+  // asset_id 只作为可选精确筛选条件，0 表示不筛选。
+  int64 asset_id = 4;
+  // page 从 1 开始，0 使用默认值 1。
+  int32 page = 5;
+  // page_size 为每页条数，0 使用默认值 50。
+  int32 page_size = 6;
+  // 仅 admin 可指定；省略时按用户资产可见性查询。
+  AssetStatus asset_status = 7;
+}
+
+message ListFundingBalancesResponse {
+  repeated FundingBalance balances = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  int64 total = 4;
+}
+
+message CreditDepositRequest {
+  int64 command_id = 1;
+  int64 wallet_deposit_id = 2;
+  string home_site_id = 3;
+  int64 user_id = 4;
+  string asset_code = 7;
+  string amount = 8;
+  int64 agent_id = 9; // Wallet/User Service 提供的权威代理归属，默认 0
+}
+
+message CreditDepositResponse {
+  int64 command_id = 1;
+  CommandResultStatus result_status = 2;
+  string result_code = 3;
+  string message = 4;
+  int64 wallet_deposit_id = 5;
+  int64 ledger_id = 6;
+  FundingBalance balance = 7;
+}
+
+// FundingBusinessMutationRequest 表示受信业务服务提交的一次最终资金增减。
+message FundingBusinessMutationRequest {
+  int64 command_id = 1;
+  int64 business_operation_id = 2;
+  int64 related_operation_id = 3;
+  string business_type = 4;
+  int64 business_id = 5;
+  string home_site_id = 6;
+  int64 user_id = 7;
+  string asset_code = 10;
+  string amount = 11;
+  // 业务编号空间；通用写请求必填，查询省略时不额外过滤。
+  string business_scope = 12;
+  // 仅 agent 单笔 CreditFunding 可显式携带可信代理；0 表示无代理，省略只操作已有账户。
+  optional int64 agent_id = 13;
+}
+
+message FundingBusinessMutationResponse {
+  int64 command_id = 1;
+  CommandResultStatus result_status = 2;
+  string result_code = 3;
+  string message = 4;
+  int64 business_operation_id = 5;
+  int64 business_id = 6;
+  int64 ledger_id = 7;
+  FundingBalance balance = 8;
+  // 业务编号空间；通用写请求必填，查询省略时不额外过滤。
+  string business_scope = 9;
+}
+
+// BatchFundingBusinessMutationItem 表示批量请求中的一项独立资金命令。
+message BatchFundingBusinessMutationItem {
+  FundingBusinessMutationDirection direction = 1;
+  FundingBusinessMutationRequest mutation = 2;
+}
+
+message BatchApplyFundingMutationsRequest {
+  repeated BatchFundingBusinessMutationItem items = 1;
+}
+
+// BatchFundingBusinessMutationResult 使用命令 ID 与请求项关联，不依赖返回顺序。
+message BatchFundingBusinessMutationResult {
+  FundingBusinessMutationDirection direction = 1;
+  FundingBusinessMutationResponse mutation = 2;
+}
+
+message BatchApplyFundingMutationsResponse {
+  repeated BatchFundingBusinessMutationResult results = 1;
+}
+
+// FundingHold 表示一笔可审计的 Funding 资金冻结。
+message FundingHold {
+  int64 hold_id = 1;
+  int64 account_id = 2;
+  int64 asset_id = 3;
+  string asset_code = 4;
+  string hold_type = 5;
+  int64 business_id = 6;
+  string original_amount = 7;
+  string consumed_amount = 8;
+  string released_amount = 9;
+  string remaining_amount = 10;
+  FundingHoldStatus status = 11;
+  FundingHoldCloseReason close_reason = 12;
+  int64 version = 13;
+  int64 created_at_ms = 14;
+  int64 updated_at_ms = 15;
+  int64 closed_at_ms = 16;
+  // 用户发起的提现总额，也是 Funding 冻结和扣除金额。
+  string withdraw_amount = 17;
+  // 包含在提现总额内的手续费。
+  string fee_amount = 18;
+  // 链上实际到账金额，等于 withdraw_amount - fee_amount。
+  string receive_amount = 19;
+  int64 expires_at_ms = 20;
+  // 业务编号空间；通用写请求必填，查询省略时不额外过滤。
+  string business_scope = 21;
+}
+
+message CreateFundingHoldRequest {
+  int64 command_id = 1;
+  int64 business_operation_id = 2;
+  int64 related_operation_id = 3;
+  string business_type = 4;
+  int64 business_id = 5;
+  string hold_type = 6;
+  string home_site_id = 7;
+  int64 user_id = 8;
+  string asset_code = 11;
+  string amount = 12;
+  // 0 表示无到期时间；到期不会触发数据库自动释放。
+  int64 expires_at_ms = 13;
+  // 业务编号空间；通用写请求必填，查询省略时不额外过滤。
+  string business_scope = 14;
+}
+
+message CaptureFundingHoldRequest {
+  int64 command_id = 1;
+  int64 business_operation_id = 2;
+  int64 related_operation_id = 3;
+  string business_type = 4;
+  int64 business_id = 5;
+  string hold_type = 6;
+  string home_site_id = 7;
+  int64 user_id = 8;
+  int64 hold_id = 10;
+  int64 expected_hold_version = 11;
+  string amount = 12;
+  // 业务编号空间；通用写请求必填，查询省略时不额外过滤。
+  string business_scope = 13;
+}
+
+message ReleaseFundingHoldRequest {
+  int64 command_id = 1;
+  int64 business_operation_id = 2;
+  int64 related_operation_id = 3;
+  string business_type = 4;
+  int64 business_id = 5;
+  string hold_type = 6;
+  string home_site_id = 7;
+  int64 user_id = 8;
+  int64 hold_id = 10;
+  int64 expected_hold_version = 11;
+  string amount = 12;
+  FundingHoldCloseReason release_reason = 13;
+  // 业务编号空间；通用写请求必填，查询省略时不额外过滤。
+  string business_scope = 14;
+}
+
+message FundingHoldMutationResponse {
+  int64 command_id = 1;
+  CommandResultStatus result_status = 2;
+  string result_code = 3;
+  string message = 4;
+  int64 business_operation_id = 5;
+  int64 business_id = 6;
+  FundingHold hold = 7;
+  FundingBalance balance = 8;
+  int64 ledger_id = 9;
+  // 业务编号空间；通用写请求必填，查询省略时不额外过滤。
+  string business_scope = 10;
+}
+
+message CreateWithdrawalHoldRequest {
+  int64 command_id = 1;
+  int64 wallet_withdrawal_id = 2;
+  string home_site_id = 3;
+  int64 user_id = 4;
+  string asset_code = 7;
+  // 用户发起的提现总额，也是 Funding 冻结金额。
+  string withdraw_amount = 8;
+  // 包含在提现总额内的手续费。
+  string fee_amount = 9;
+}
+
+message CreateWithdrawalHoldResponse {
+  int64 command_id = 1;
+  CommandResultStatus result_status = 2;
+  string result_code = 3;
+  string message = 4;
+  FundingHold hold = 5;
+  FundingBalance balance = 6;
+  repeated int64 ledger_ids = 7;
+  int64 wallet_withdrawal_id = 8;
+}
+
+message SettleWithdrawalHoldRequest {
+  int64 command_id = 1;
+  int64 wallet_withdrawal_id = 2;
+  string home_site_id = 3;
+  int64 user_id = 4;
+  int64 hold_id = 6;
+  int64 expected_hold_version = 7;
+}
+
+message SettleWithdrawalHoldResponse {
+  int64 command_id = 1;
+  CommandResultStatus result_status = 2;
+  string result_code = 3;
+  string message = 4;
+  FundingHold hold = 5;
+  FundingBalance balance = 6;
+  repeated int64 ledger_ids = 7;
+  int64 wallet_withdrawal_id = 8;
+}
+
+message ReleaseWithdrawalHoldRequest {
+  int64 command_id = 1;
+  int64 wallet_withdrawal_id = 2;
+  string home_site_id = 3;
+  int64 user_id = 4;
+  int64 hold_id = 6;
+  int64 expected_hold_version = 7;
+  FundingHoldCloseReason release_reason = 8;
+}
+
+message ReleaseWithdrawalHoldResponse {
+  int64 command_id = 1;
+  CommandResultStatus result_status = 2;
+  string result_code = 3;
+  string message = 4;
+  FundingHold hold = 5;
+  FundingBalance balance = 6;
+  repeated int64 ledger_ids = 7;
+  int64 wallet_withdrawal_id = 8;
+}
+
+message GetFundingHoldRequest {
+  string home_site_id = 1;
+  int64 user_id = 2;
+  int64 hold_id = 4;
+}
+
+message GetFundingHoldResponse {
+  FundingHold hold = 1;
+}
+
+message ListFundingHoldsRequest {
+  string home_site_id = 1;
+  int64 user_id = 2;
+  int64 asset_id = 4;
+  string hold_type = 5;
+  FundingHoldStatus status = 6;
+  int64 business_id = 7;
+  int32 page = 8;
+  int32 page_size = 9;
+}
+
+message ListFundingHoldsResponse {
+  repeated FundingHold holds = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  int64 total = 4;
+}
+
+// FundingLedgerEntry 表示一条不可修改的 Funding 资金流水。
+message FundingLedgerEntry {
+  int64 ledger_id = 1;
+  string home_site_id = 2;
+  int64 user_id = 3;
+  int64 account_id = 5;
+  int64 asset_id = 6;
+  string asset_code = 7;
+  int64 command_id = 8;
+  int32 entry_index = 9;
+  string entry_type = 10;
+  string business_type = 11;
+  int64 business_id = 12;
+  int64 hold_id = 13;
+  int64 transfer_id = 14;
+  string available_delta = 15;
+  string held_delta = 16;
+  string available_before = 17;
+  string available_after = 18;
+  string held_before = 19;
+  string held_after = 20;
+  int64 balance_version = 21;
+  int64 reversal_of_ledger_id = 22;
+  int64 created_at_ms = 23;
+  string caller_identity = 24;
+  int64 business_operation_id = 25;
+  int64 related_operation_id = 26;
+  // 业务编号空间；通用写请求必填，查询省略时不额外过滤。
+  string business_scope = 27;
+}
+
+message ListFundingLedgerEntriesRequest {
+  // api 必须指定；admin 省略时不限制站点。
+  string home_site_id = 1;
+  // api 必须指定；admin 省略时不限制用户。
+  int64 user_id = 2;
+  int64 asset_id = 4;
+  int64 command_id = 5;
+  string entry_type = 6;
+  string business_type = 7;
+  int64 business_id = 8;
+  int64 hold_id = 9;
+  int64 transfer_id = 10;
+  // page 从 1 开始，0 使用默认值 1。
+  int32 page = 11;
+  // page_size 为每页条数，0 使用默认值 50，最大 100。
+  int32 page_size = 12;
+  string caller_identity = 13;
+  int64 business_operation_id = 14;
+  int64 related_operation_id = 15;
+  int64 start_time_ms = 16;
+  int64 end_time_ms = 17;
+  // 业务编号空间；通用写请求必填，查询省略时不额外过滤。
+  string business_scope = 18;
+}
+
+message ListFundingLedgerEntriesResponse {
+  repeated FundingLedgerEntry entries = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  int64 total = 4;
+}
+
+// FundingCommandResult 表示一条已经提交的资金命令持久结果。
+message FundingCommandResult {
+  int64 command_id = 1;
+  string caller_identity = 2;
+  string command_type = 3;
+  int64 business_id = 4;
+  string home_site_id = 5;
+  int64 user_id = 6;
+  CommandResultStatus result_status = 7;
+  string result_code = 8;
+  string result_payload_json = 9;
+  int64 created_at_ms = 10;
+  // ACCEPTED 尚未完成时返回 0。
+  int64 completed_at_ms = 11;
+  string business_type = 12;
+  int64 business_operation_id = 13;
+  int64 related_operation_id = 14;
+  // 业务编号空间；通用写请求必填，查询省略时不额外过滤。
+  string business_scope = 15;
+}
+
+message GetFundingCommandResultRequest {
+  int64 command_id = 1;
+  // api 必须指定；admin 省略时不额外限制站点。
+  string home_site_id = 2;
+  // api 必须指定；admin 省略时不额外限制用户。
+  int64 user_id = 3;
+  // 业务编号空间；通用写请求必填，查询省略时不额外过滤。
+  string business_scope = 4;
+}
+
+message GetFundingCommandResultResponse {
+  FundingCommandResult command_result = 1;
+}
+
+// FundingAdjustment 表示一张可审计的人工资金调整单。
+message FundingAdjustment {
+  int64 adjustment_id = 1;
+  int64 business_id = 2;
+  string home_site_id = 3;
+  int64 user_id = 4;
+  int64 account_id = 7;
+  int64 asset_id = 8;
+  string asset_code = 9;
+  FundingAdjustmentDirection direction = 10;
+  string amount = 11;
+  string reason_code = 12;
+  string reason_detail = 13;
+  string other_data_json = 14;
+  FundingAdjustmentApprovalMode approval_mode = 15;
+  FundingAdjustmentStatus status = 16;
+  string result_code = 17;
+  string result_payload_json = 18;
+  string requester_identity = 19;
+  int64 requester_operator_id = 20;
+  string reviewer_identity = 21;
+  int64 reviewer_operator_id = 22;
+  string review_note = 23;
+  int64 created_command_id = 24;
+  int64 review_command_id = 25;
+  int64 ledger_id = 26;
+  int64 version = 27;
+  int64 created_at_ms = 28;
+  int64 updated_at_ms = 29;
+  int64 reviewed_at_ms = 30;
+  int64 completed_at_ms = 31;
+}
+
+message CreateFundingAdjustmentRequest {
+  int64 command_id = 1;
+  int64 business_id = 2;
+  string home_site_id = 3;
+  int64 account_id = 4;
+  string asset_code = 5;
+  FundingAdjustmentDirection direction = 6;
+  string amount = 7;
+  string reason_code = 8;
+  string reason_detail = 9;
+  // JSON 对象字符串；空字符串按空对象处理。
+  string other_data_json = 10;
+  int64 operator_id = 11;
+}
+
+message CreateFundingAdjustmentResponse {
+  int64 command_id = 1;
+  CommandResultStatus result_status = 2;
+  string result_code = 3;
+  string message = 4;
+  FundingAdjustment adjustment = 5;
+  FundingBalance balance = 6;
+  int64 ledger_id = 7;
+}
+
+message ReviewFundingAdjustmentRequest {
+  int64 command_id = 1;
+  int64 adjustment_id = 2;
+  string home_site_id = 3;
+  int64 account_id = 4;
+  int64 expected_version = 5;
+  FundingAdjustmentReviewDecision decision = 6;
+  string review_note = 7;
+  int64 operator_id = 8;
+}
+
+message ReviewFundingAdjustmentResponse {
+  int64 command_id = 1;
+  CommandResultStatus result_status = 2;
+  string result_code = 3;
+  string message = 4;
+  FundingAdjustment adjustment = 5;
+  FundingBalance balance = 6;
+  int64 ledger_id = 7;
+}
+
+message GetFundingAdjustmentRequest {
+  string home_site_id = 1;
+  // adjustment_id 和 business_id 必须且只能指定一个。
+  int64 adjustment_id = 2;
+  int64 business_id = 3;
+}
+
+message GetFundingAdjustmentResponse {
+  FundingAdjustment adjustment = 1;
+}
+
+message ListFundingAdjustmentsRequest {
+  string home_site_id = 1;
+  int64 user_id = 2;
+  string asset_code = 4;
+  FundingAdjustmentDirection direction = 5;
+  FundingAdjustmentStatus status = 6;
+  int64 business_id = 7;
+  int64 requester_operator_id = 8;
+  int32 page_size = 9;
+  string page_token = 10;
+}
+
+message ListFundingAdjustmentsResponse {
+  repeated FundingAdjustment adjustments = 1;
+  string next_page_token = 2;
+}
+
+// FundingTransfer 表示一笔 Funding 与交易账户之间的可恢复划转。
+message FundingTransfer {
+  int64 transfer_id = 1;
+  string home_site_id = 2;
+  int64 user_id = 3;
+  int64 account_id = 6;
+  int64 asset_id = 7;
+  string asset_code = 8;
+  FundingTransferCounterpartyType counterparty_type = 9;
+  FundingTransferDirection direction = 10;
+  string amount = 11;
+  int64 downstream_command_id = 12;
+  int64 hold_id = 13;
+  FundingTransferStatus status = 14;
+  FundingTransferDownstreamStatus downstream_status = 15;
+  string downstream_result_code = 16;
+  int64 version = 17;
+  int64 created_at_ms = 18;
+  int64 updated_at_ms = 19;
+  int64 completed_at_ms = 20;
+  // counterparty_transfer_id 是对端已完成扣款的稳定划转 ID，仅 Funding 转入使用。
+  int64 counterparty_transfer_id = 21;
+}
+
+message CreateAccountTransferRequest {
+  int64 command_id = 1;
+  string home_site_id = 2;
+  int64 user_id = 3;
+  string asset_code = 6;
+  FundingTransferCounterpartyType counterparty_type = 7;
+  // 首期只允许 FUNDING_OUT；Funding 转入使用 CreditFundingTransfer。
+  FundingTransferDirection direction = 8;
+  string amount = 9;
+  // 全部划转时 amount 必须为空；在余额行锁内固定全部可用金额。
+  bool transfer_all = 10;
+  // 可信上游提供的代理归属；0 表示确定无代理，已有账户必须严格一致。
+  int64 agent_id = 11;
+}
+
+message CreateAccountTransferResponse {
+  int64 command_id = 1;
+  CommandResultStatus result_status = 2;
+  string result_code = 3;
+  string message = 4;
+  FundingTransfer transfer = 5;
+}
+
+// CreditFundingTransferRequest 表示交易账户已完成扣款后请求 Funding 入账。
+message CreditFundingTransferRequest {
+  int64 command_id = 1;
+  // counterparty_transfer_id 由对端模块生成，同一业务重试必须复用。
+  int64 counterparty_transfer_id = 2;
+  string home_site_id = 3;
+  int64 user_id = 4;
+  string asset_code = 7;
+  FundingTransferCounterpartyType counterparty_type = 8;
+  string amount = 9;
+  // 对端固定的可信代理归属；0 表示确定无代理，已有账户必须严格一致。
+  int64 agent_id = 10;
+}
+
+message CreditFundingTransferResponse {
+  int64 command_id = 1;
+  CommandResultStatus result_status = 2;
+  string result_code = 3;
+  string message = 4;
+  FundingTransfer transfer = 5;
+}
+
+message GetFundingTransferRequest {
+  int64 transfer_id = 1;
+  string home_site_id = 2;
+  int64 user_id = 3;
+}
+
+message GetFundingTransferResponse {
+  FundingTransfer transfer = 1;
+}
+
+message ListFundingTransfersRequest {
+  string home_site_id = 1;
+  int64 user_id = 2;
+  string asset_code = 4;
+  FundingTransferCounterpartyType counterparty_type = 5;
+  FundingTransferDirection direction = 6;
+  FundingTransferStatus status = 7;
+  int32 page = 8;
+  int32 page_size = 9;
+}
+
+message ListFundingTransfersResponse {
+  repeated FundingTransfer transfers = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  int64 total = 4;
+}
+
+// FundingTransferResolution 表示管理后台依据权威记录完成的核对结论。
+enum FundingTransferResolution {
+  FUNDING_TRANSFER_RESOLUTION_UNSPECIFIED = 0;
+  FUNDING_TRANSFER_RESOLUTION_CONFIRMED_SUCCEEDED = 1;
+  // 查不到结果不足以确认未执行，管理后台必须先完成权威对账。
+  FUNDING_TRANSFER_RESOLUTION_CONFIRMED_NOT_EXECUTED = 2;
+}
+
+// ResolveFundingTransferRequest 仅用于处置已持久暂停的 Funding 转出。
+message ResolveFundingTransferRequest {
+  // 管理操作的稳定命令身份，未知结果重试必须复用全部原参数。
+  int64 command_id = 1;
+  string home_site_id = 2;
+  int64 user_id = 3;
+  int64 transfer_id = 4;
+  int64 expected_version = 5;
+  FundingTransferResolution resolution = 6;
+  int64 operator_id = 7;
+  string reason = 8;
+  // 权威对账记录或工单引用，不能仅提供 NOT_FOUND；不传密码等敏感正文。
+  string evidence_reference = 9;
+}
+
+message ResolveFundingTransferResponse {
+  int64 command_id = 1;
+  // 处置执行成功时为 SUCCEEDED，即使原划转最终为 REJECTED。
+  CommandResultStatus result_status = 2;
+  string result_code = 3;
+  string message = 4;
+  FundingTransfer transfer = 5;
+}
+
+service AssetService {
+  rpc Ping(PingRequest) returns (PingResponse);
+  rpc CreateFundingAsset(CreateFundingAssetRequest) returns (CreateFundingAssetResponse);
+  rpc ChangeFundingAssetStatus(ChangeFundingAssetStatusRequest) returns (ChangeFundingAssetStatusResponse);
+  rpc GetFundingAsset(GetFundingAssetRequest) returns (GetFundingAssetResponse);
+  rpc ListFundingAssets(ListFundingAssetsRequest) returns (ListFundingAssetsResponse);
+  rpc GetFundingAccount(GetFundingAccountRequest) returns (GetFundingAccountResponse);
+  rpc GetFundingBalance(GetFundingBalanceRequest) returns (GetFundingBalanceResponse);
+  rpc ListFundingBalances(ListFundingBalancesRequest) returns (ListFundingBalancesResponse);
+  rpc CreditDeposit(CreditDepositRequest) returns (CreditDepositResponse);
+  rpc CreditFunding(FundingBusinessMutationRequest) returns (FundingBusinessMutationResponse);
+  rpc DebitFunding(FundingBusinessMutationRequest) returns (FundingBusinessMutationResponse);
+  rpc BatchApplyFundingMutations(BatchApplyFundingMutationsRequest) returns (BatchApplyFundingMutationsResponse);
+  rpc CreateFundingHold(CreateFundingHoldRequest) returns (FundingHoldMutationResponse);
+  rpc CaptureFundingHold(CaptureFundingHoldRequest) returns (FundingHoldMutationResponse);
+  rpc ReleaseFundingHold(ReleaseFundingHoldRequest) returns (FundingHoldMutationResponse);
+  rpc CreateWithdrawalHold(CreateWithdrawalHoldRequest) returns (CreateWithdrawalHoldResponse);
+  rpc SettleWithdrawalHold(SettleWithdrawalHoldRequest) returns (SettleWithdrawalHoldResponse);
+  rpc ReleaseWithdrawalHold(ReleaseWithdrawalHoldRequest) returns (ReleaseWithdrawalHoldResponse);
+  rpc GetFundingHold(GetFundingHoldRequest) returns (GetFundingHoldResponse);
+  rpc ListFundingHolds(ListFundingHoldsRequest) returns (ListFundingHoldsResponse);
+  rpc ListFundingLedgerEntries(ListFundingLedgerEntriesRequest) returns (ListFundingLedgerEntriesResponse);
+  rpc GetFundingCommandResult(GetFundingCommandResultRequest) returns (GetFundingCommandResultResponse);
+  rpc CreateFundingAdjustment(CreateFundingAdjustmentRequest) returns (CreateFundingAdjustmentResponse);
+  rpc ReviewFundingAdjustment(ReviewFundingAdjustmentRequest) returns (ReviewFundingAdjustmentResponse);
+  rpc GetFundingAdjustment(GetFundingAdjustmentRequest) returns (GetFundingAdjustmentResponse);
+  rpc ListFundingAdjustments(ListFundingAdjustmentsRequest) returns (ListFundingAdjustmentsResponse);
+  rpc CreateAccountTransfer(CreateAccountTransferRequest) returns (CreateAccountTransferResponse);
+  rpc CreditFundingTransfer(CreditFundingTransferRequest) returns (CreditFundingTransferResponse);
+  rpc GetFundingTransfer(GetFundingTransferRequest) returns (GetFundingTransferResponse);
+  rpc ListFundingTransfers(ListFundingTransfersRequest) returns (ListFundingTransfersResponse);
+  rpc ResolveFundingTransfer(ResolveFundingTransferRequest) returns (ResolveFundingTransferResponse);
+}
